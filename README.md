@@ -1,4 +1,4 @@
-## PureMongo - a pure JavaScript Implimentation for MongoDB
+## PureMongo - a pure JavaScript clone for MongoDB
  
 
 ### Questions and Bug Reports
@@ -45,6 +45,9 @@ A simple example of inserting a document.
     });
   })
 ```
+
+Currently, puremongo doesn't have any function as a network server, only in-process working.
+
 
 ## GitHub information
 
