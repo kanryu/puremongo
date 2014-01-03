@@ -1,16 +1,16 @@
 // test2 insert
 /// http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
 // type 'mocha test_find.js'
-var Db = require('./mongojs').Db,
-    MongoClient = require('./mongojs').MongoClient,
-    Server = require('./mongojs').Server,
-    ReplSetServers = require('./mongojs').ReplSetServers,
-    ObjectID = require('./mongojs').ObjectID,
-    Binary = require('./mongojs').Binary,
-    GridStore = require('./mongojs').GridStore,
-    Grid = require('./mongojs').Grid,
-    Code = require('./mongojs').Code,
-    BSON = require('./mongojs').pure().BSON,
+var Db = require('./puremongo').Db,
+    MongoClient = require('./puremongo').MongoClient,
+    Server = require('./puremongo').Server,
+    ReplSetServers = require('./puremongo').ReplSetServers,
+    ObjectID = require('./puremongo').ObjectID,
+    Binary = require('./puremongo').Binary,
+    GridStore = require('./puremongo').GridStore,
+    Grid = require('./puremongo').Grid,
+    Code = require('./puremongo').Code,
+    BSON = require('./puremongo').pure().BSON,
     assert = require('assert');
 
 describe('collection', function () {

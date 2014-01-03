@@ -1,4 +1,4 @@
-## MongoJS - a pure JavaScript DataBase
+## PureMongo - a pure JavaScript Implimentation for MongoDB
  
 
 ### Questions and Bug Reports
@@ -23,7 +23,7 @@ A simple example of inserting a document.
 ```javascript
   //var MongoClient = require('mongodb').MongoClient
   //  , format = require('util').format;
-  var MongoClient = require('mongojs').MongoClient
+  var MongoClient = require('./puremongo').MongoClient
     , format = require('util').format;
 
   MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
@@ -48,14 +48,8 @@ A simple example of inserting a document.
 
 ## GitHub information
 
-The source code is available at http://github.com/kanryu/mongojs
+The source code is available at http://github.com/kanryu/puremongo
 You can either clone the repository or download a tarball of the latest release.
-
-Once you have the source you can test the driver by running
-
-    $ make test
-
-in the main directory. You will need to have a mongo instance running on localhost for the integration tests to pass.
 
 ### Find
 
@@ -191,7 +185,7 @@ The `save` method is a shorthand for upsert if the document contains an
 
 ## Tests
 ```shellscript
-  $ mocha test_**.js
+  $ mocha test_*.js
 ```
 
 ## License
