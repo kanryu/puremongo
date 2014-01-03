@@ -46,54 +46,9 @@ A simple example of inserting a document.
   })
 ```
 
-## Data types
-
-To store and retrieve the non-JSON MongoDb primitives ([ObjectID](http://www.mongodb.org/display/DOCS/Object+IDs), Long, Binary, [Timestamp](http://www.mongodb.org/display/DOCS/Timestamp+data+type), [DBRef](http://www.mongodb.org/display/DOCS/Database+References#DatabaseReferences-DBRef), Code).
-
-In particular, every document has a unique `_id` which can be almost any type, and by default a 12-byte ObjectID is created. ObjectIDs can be represented as 24-digit hexadecimal strings, but you must convert the string back into an ObjectID before you can use it in the database. For example:
-
-```javascript
-  // Get the objectID type
-  var ObjectID = require('mongodb').ObjectID;
-
-  var idString = '4e4e1638c85e808431000003';
-  collection.findOne({_id: new ObjectID(idString)}, console.log)  // ok
-  collection.findOne({_id: idString}, console.log)  // wrong! callback gets undefined
-```
-
-Here are the constructors the non-Javascript BSON primitive types:
-
-```javascript
-  // Fetch the library
-  var mongo = require('mongodb');
-  // Create new instances of BSON types
-  new mongo.Long(numberString)
-  new mongo.ObjectID(hexString)
-  new mongo.Timestamp()  // the actual unique number is generated on insert.
-  new mongo.DBRef(collectionName, id, dbName)
-  new mongo.Binary(buffer)  // takes a string or Buffer
-  new mongo.Code(code, [context])
-  new mongo.Symbol(string)
-  new mongo.MinKey()
-  new mongo.MaxKey()
-  new mongo.Double(number)	// Force double storage
-```
-
-### The C/C++ bson parser/serializer
-
-If you are running a version of this library has the C/C++ parser compiled, to enable the driver to use the C/C++ bson parser pass it the option native_parser:true like below
-
-```javascript
-  // using native_parser:
-  MongoClient.connect('mongodb://127.0.0.1:27017/test'
-    , {db: {native_parser: true}}, function(err, db) {})
-```
-
-The C++ parser uses the js objects both for serialization and deserialization.
-
 ## GitHub information
 
-The source code is available at http://github.com/kanryu6/mongojs
+The source code is available at http://github.com/kanryu/mongojs
 You can either clone the repository or download a tarball of the latest release.
 
 Once you have the source you can test the driver by running
@@ -210,8 +165,6 @@ Signature:
 
 Useful options:
 
-* `safe:true` Should always set if you have a callback.
-* `multi:true` If set, all matching documents are updated, not just the first.
 * `upsert:true` Atomically inserts the document if no documents matched.
 
 Example for `update`:
@@ -237,7 +190,9 @@ The `save` method is a shorthand for upsert if the document contains an
 `_id`, or an insert if there is no `_id`.
 
 ## Tests
-$ mocha test_**.js
+```shellscript
+  $ mocha test_**.js
+```
 
 ## License
 
