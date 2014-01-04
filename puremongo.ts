@@ -28,6 +28,26 @@ export class MongoCursor {
 			callback(null, this.results.length);
 		return this.results.length;
 	}
+	limit(n): MongoCursor {
+		this.results = this.results.slice(0, n);
+		return this;
+	}
+	skip(n): MongoCursor {
+		this.results = this.results.slice(n);
+		return this;
+	}
+	snapshot() {
+		throw new Error("not implemented");
+	}
+	rewind() {
+		throw new Error("not implemented");
+	}
+	nextObject() {
+		throw new Error("not implemented");
+	}
+	each() {
+		throw new Error("not implemented");
+	}
 }
 
 // http://docs.mongodb.org/manual/reference/operator/query/
@@ -50,8 +70,16 @@ export class QuerySelector {
 			'$nor': this.cr_nor,
 			// Logical
 			'$exists': this.cr_exists,
+			'$type': this.cr_noimp,
 			// Evaluation
+			'$mod': this.cr_noimp,
+			'$regex': this.cr_noimp,
 			'$where': this.cr_where,
+			// Geospatial
+			'$geoWithin': this.cr_noimp,
+			'$geoIntersects': this.cr_noimp,
+			'$near': this.cr_noimp,
+			'$nearSphere': this.cr_noimp,
 			// Array
 			'$all': this.cr_all,
 			'$elemMatch': this.cr_elemMatch,
@@ -97,11 +125,8 @@ export class QuerySelector {
 	
 	// Element
 	cr_exists(x,c,f:string):bool {return c ^ (x[f] === undefined);}
-	//cr_type()
 	
 	// Evaluation
-	//cr_mod()
-	//cr_regex()
 	cr_where(x,c,f:string):bool {
 		switch(typeof(c)) {
 		case 'function':
@@ -128,6 +153,7 @@ export class QuerySelector {
 		var self:QuerySelector = this;
 		return function(element, index, array) {return self.cr_run(x, element)};
 	}
+	cr_noimp(){throw new Error("not implemented");}
 }
 // http://docs.mongodb.org/manual/reference/operator/query/
 export class UpdateOperator {

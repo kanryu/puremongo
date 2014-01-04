@@ -28,6 +28,26 @@ var MongoCursor = (function () {
         }
         return this.results.length;
     };
+    MongoCursor.prototype.limit = function (n) {
+        this.results = this.results.slice(0, n);
+        return this;
+    };
+    MongoCursor.prototype.skip = function (n) {
+        this.results = this.results.slice(n);
+        return this;
+    };
+    MongoCursor.prototype.snapshot = function () {
+        throw new Error("not implemented");
+    };
+    MongoCursor.prototype.rewind = function () {
+        throw new Error("not implemented");
+    };
+    MongoCursor.prototype.nextObject = function () {
+        throw new Error("not implemented");
+    };
+    MongoCursor.prototype.each = function () {
+        throw new Error("not implemented");
+    };
     return MongoCursor;
 })();
 exports.MongoCursor = MongoCursor;
@@ -47,7 +67,14 @@ var QuerySelector = (function () {
             '$not': this.cr_not,
             '$nor': this.cr_nor,
             '$exists': this.cr_exists,
+            '$type': this.cr_noimp,
+            '$mod': this.cr_noimp,
+            '$regex': this.cr_noimp,
             '$where': this.cr_where,
+            '$geoWithin': this.cr_noimp,
+            '$geoIntersects': this.cr_noimp,
+            '$near': this.cr_noimp,
+            '$nearSphere': this.cr_noimp,
             '$all': this.cr_all,
             '$elemMatch': this.cr_elemMatch,
             '$size': this.cr_size
@@ -151,6 +178,9 @@ var QuerySelector = (function () {
         return function (element, index, array) {
             return self.cr_run(x, element);
         }
+    };
+    QuerySelector.prototype.cr_noimp = function () {
+        throw new Error("not implemented");
     };
     return QuerySelector;
 })();

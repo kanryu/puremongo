@@ -60,7 +60,7 @@ You can either clone the repository or download a tarball of the latest release.
 
 The find method is actually a factory method to create
 Cursor objects. A Cursor lazily uses the connection the first time
-you call `nextObject`, `each`, or `toArray`.
+you call `toArray`.
 
 The basic operation on a cursor is the `nextObject` method
 that fetches the next matching document from the database. The convenience
@@ -70,17 +70,15 @@ Signatures:
 
 ```javascript
   var cursor = collection.find(query, [fields], options);
-  cursor.sort(fields).limit(n).skip(m).
+  cursor.sort(fields).limit(n).skip(m);
 
-  //cursor.nextObject(function(err, doc) {});
-  //cursor.each(function(err, doc) {});
   cursor.toArray(function(err, docs) {});
-
-  //cursor.rewind()  // reset the cursor to its initial state.
 ```
 
 Useful chainable methods of cursor. These can optionally be options of `find` instead of method calls:
 
+  * `.limit(n).skip(m)` to control paging.
+  * `.sort(fields)` Order by the given fields. There are several equivalent syntaxes:
   * `.sort({field1: -1, field2: 1})` descending by field1, then ascending by field2.
 
 Other options of `find`:

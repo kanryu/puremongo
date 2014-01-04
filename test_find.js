@@ -416,5 +416,36 @@ describe('collection', function () {
           });
         });
 
+        /// find operators check for not implemented options
+        it('find operators check for not implemented options', function () {
+          var db = new Db('test', new Server('locahost', 27017));
+          db.open(function(err, db) {
+            // Fetch a collection to insert document into
+            var collection = db.collection("find_collection_safe4");
+            // Insert a single document
+            collection.insert([
+              {hello:'world_safe1', a:{b:10}},
+              {hello:'world_safe2', a:{c:10}},
+              {hello:'world_safe3', a:{b:30}},
+            ], {w:1}, function(err, result) {
+              assert.equal(null, err);
+
+              // Fetch the document
+              assert.throws(function(){collection.find({$type:{a:10}});}, "not implemented");
+              assert.throws(function(){collection.find({$mod:{a:10}});}, "not implemented");
+              assert.throws(function(){collection.find({$regex:{hello:"d"}});}, "not implemented");
+              assert.throws(function(){collection.find({$geoWithin:{a:10}});}, "not implemented");
+              assert.throws(function(){collection.find({$geoIntersects:{a:10}});}, "not implemented");
+              assert.throws(function(){collection.find({$near:{a:10}});}, "not implemented");
+              assert.throws(function(){collection.find({$nearSphere:{a:10}});}, "not implemented");
+              assert.throws(function(){collection.find().snapshot();}, "not implemented");
+              assert.throws(function(){collection.find().snapshot();}, "not implemented");
+              assert.throws(function(){collection.find().rewind();}, "not implemented");
+              assert.throws(function(){collection.find().nextObject();}, "not implemented");
+              assert.throws(function(){collection.find().each();}, "not implemented");
+            });
+          });
+        });
+
     });
 });
