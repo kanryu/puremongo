@@ -8,7 +8,7 @@
 
 ## Install
 
-Just use mongojs.js! :)
+Just use puremongo.js! :)
 
 
 ## Live Examples
@@ -17,6 +17,8 @@ Just use mongojs.js! :)
 ## Introduction
 
 This is a pure JavaScript clone for MongoDB. This API similar to at https://github.com/mongodb/node-mongodb-native .
+
+You can run the DB on node.js, on Common.js even on web browsers.
 
 A simple example of inserting a document.
 
