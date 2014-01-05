@@ -77,17 +77,28 @@ var QuerySelector = (function () {
             '$nearSphere': this.cr_noimp,
             '$all': this.cr_all,
             '$elemMatch': this.cr_elemMatch,
-            '$size': this.cr_size
+            '$size': this.cr_size,
+            '$allArray': this.cr_noimp,
+            '$elemMatchArray': this.cr_noimp,
+            '$sizeArray': this.cr_noimp
         };
     }
     QuerySelector.prototype.run = function (x, criteria, field) {
+        if (typeof field === "undefined") { field = ''; }
         if(typeof (criteria) == 'function') {
-            return this.cr_where(x, criteria, field);
+            return this.cr_where(x, criteria);
         }
         var self = this;
         return Object.keys(criteria).every(function (c, i, keys) {
             if(self.query_selectors[c]) {
-                return self.query_selectors[c].call(self, x, criteria[c], field);
+                var qs = self.query_selectors[c];
+                if(x instanceof Array && !self.query_selectors[c + 'Array']) {
+                    return x.some(function (xe) {
+                        var result = self.run(xe, criteria);
+                        return result;
+                    });
+                }
+                return qs.call(self, x, criteria[c]);
             } else {
                 if(c.indexOf('.') > 0) {
                     var parent = c.split('.', 1)[0];
@@ -95,33 +106,33 @@ var QuerySelector = (function () {
                     var sub_criteria = {
                     };
                     sub_criteria[child] = criteria[c];
-                    return self.run(x[parent], sub_criteria);
+                    return self.run(x[parent], sub_criteria, field + '.' + parent);
                 } else {
                     if(typeof (criteria[c]) != 'object') {
                         return x[c] == criteria[c];
                     }
                 }
             }
-            return self.run(x, criteria[c], c);
+            return self.run(x[c], criteria[c], field + '.' + c);
         });
     };
-    QuerySelector.prototype.cr_gt = function (x, c, f) {
-        return x[f] > c;
+    QuerySelector.prototype.cr_gt = function (x, c) {
+        return x > c;
     };
-    QuerySelector.prototype.cr_gte = function (x, c, f) {
-        return x[f] >= c;
+    QuerySelector.prototype.cr_gte = function (x, c) {
+        return x >= c;
     };
-    QuerySelector.prototype.cr_lt = function (x, c, f) {
-        return x[f] < c;
+    QuerySelector.prototype.cr_lt = function (x, c) {
+        return x < c;
     };
-    QuerySelector.prototype.cr_lte = function (x, c, f) {
-        return x[f] <= c;
+    QuerySelector.prototype.cr_lte = function (x, c) {
+        return x <= c;
     };
-    QuerySelector.prototype.cr_in = function (x, a, f) {
-        return a.indexOf(x[f]) >= 0;
+    QuerySelector.prototype.cr_in = function (x, a) {
+        return a.indexOf(x) >= 0;
     };
-    QuerySelector.prototype.cr_nin = function (x, a, f) {
-        return a.indexOf(x[f]) == -1;
+    QuerySelector.prototype.cr_nin = function (x, a) {
+        return a.indexOf(x) == -1;
     };
     QuerySelector.prototype.cr_and = function (x, a) {
         return a.every(this.cr_run_array(x));
@@ -135,10 +146,10 @@ var QuerySelector = (function () {
     QuerySelector.prototype.cr_nor = function (x, a) {
         return !a.some(this.cr_run_array(x));
     };
-    QuerySelector.prototype.cr_exists = function (x, c, f) {
-        return c ^ (x[f] === undefined);
+    QuerySelector.prototype.cr_exists = function (x, c) {
+        return c ^ (x === undefined);
     };
-    QuerySelector.prototype.cr_where = function (x, c, f) {
+    QuerySelector.prototype.cr_where = function (x, c) {
         switch(typeof (c)) {
             case 'function': {
                 return c.call(x);
@@ -155,20 +166,32 @@ var QuerySelector = (function () {
         }
         return false;
     };
-    QuerySelector.prototype.cr_all = function (x, a, f) {
-        var xf = x[f];
+    QuerySelector.prototype.cr_every = function (cr) {
+        return function (x, c, f) {
+            console.log("cr_every:", x, c, f);
+            if(x[f] instanceof Array) {
+                return x[f].some(function (e, i, a) {
+                    console.log("e:", a, i, f, cr(a, c, i));
+                    return cr(a, c, i);
+                });
+            } else {
+                return cr(x, c, f);
+            }
+        }
+    };
+    QuerySelector.prototype.cr_all = function (x, a) {
         return a.every(function (e) {
-            return xf.indexOf(e) >= 0;
+            return x.indexOf(e) >= 0;
         });
     };
-    QuerySelector.prototype.cr_elemMatch = function (x, c, f) {
+    QuerySelector.prototype.cr_elemMatch = function (x, c) {
         var self = this;
-        return x[f].some(function (element, index, array) {
+        return x.some(function (element, index, array) {
             return self.cr_run(element, c);
         });
     };
-    QuerySelector.prototype.cr_size = function (x, c, f) {
-        return x[f].length == c;
+    QuerySelector.prototype.cr_size = function (x, c) {
+        return x.length == c;
     };
     QuerySelector.prototype.cr_run = function (x, c) {
         return this.run(x, c);
@@ -240,6 +263,39 @@ var UpdateOperator = (function () {
     return UpdateOperator;
 })();
 exports.UpdateOperator = UpdateOperator;
+var ProjectionOperator = (function () {
+    function ProjectionOperator() {
+        this.projection_operators = {
+        };
+        this.projection_operators = {
+            '$': this.cr_first,
+            '$elemMatch': this.cr_elemMatch,
+            '$slice': this.cr_slice
+        };
+    }
+    ProjectionOperator.prototype.run = function (x, criteria, updater) {
+        var self = this;
+        return Object.keys(criteria).forEach(function (c, i, keys) {
+            if(self.projection_operators[c]) {
+                updater = self.projection_operators[c];
+                return self.run(x, criteria[c], updater);
+            }
+            return updater.call(self, x, criteria[c], c);
+        });
+    };
+    ProjectionOperator.prototype.cr_first = function (x, c, f) {
+        x[f] += c;
+    };
+    ProjectionOperator.prototype.cr_elemMatch = function (x, c, f) {
+        x[c] = x[f];
+        delete x[f];
+    };
+    ProjectionOperator.prototype.cr_slice = function (x, c, f) {
+        x[f] = c;
+    };
+    return ProjectionOperator;
+})();
+exports.ProjectionOperator = ProjectionOperator;
 var MongoDbCollection = (function () {
     function MongoDbCollection(name, db) {
         this.records = [];

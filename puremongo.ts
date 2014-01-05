@@ -61,6 +61,10 @@ export class QuerySelector {
 			'$gte': this.cr_gte,
 			'$lt': this.cr_lt,
 			'$lte': this.cr_lte,
+//			'$gt': this.cr_every(this.cr_gt),
+//			'$gte': this.cr_every(this.cr_gte),
+//			'$lt': this.cr_every(this.cr_lt),
+//			'$lte': this.cr_every(this.cr_lte),
 			'$in': this.cr_in,
 			'$nin': this.cr_nin,
 			// Logical
@@ -84,38 +88,52 @@ export class QuerySelector {
 			'$all': this.cr_all,
 			'$elemMatch': this.cr_elemMatch,
 			'$size': this.cr_size,
+			'$allArray': this.cr_noimp,
+			'$elemMatchArray': this.cr_noimp,
+			'$sizeArray': this.cr_noimp,
 		};
 	}
-	run(x, criteria, field?) {
+//	match_first = {};
+	run(x, criteria, field='') {
 		if(typeof(criteria) == 'function') {
-			return this.cr_where(x, criteria, field);
+			return this.cr_where(x, criteria);
 		}
 		var self = this;
 		return Object.keys(criteria).every(function(c, i, keys) {
+//console.log("keys:", x, c, criteria[c]);
 			if(self.query_selectors[c]) {
+				var qs = self.query_selectors[c];
+				if(x instanceof Array && !self.query_selectors[c+'Array']) {
+//console.log("some:", x, c, criteria[c]);
+					return x.some(function(xe) {
+						var result = self.run(xe, criteria);
+//						if(result) self.match_first[field] = xe;
+						return result;
+					});
+				}
 				// {field: {$gt: threshold}
-				return self.query_selectors[c].call(self, x, criteria[c], field);
+				return qs.call(self, x, criteria[c]);
 			} else if(c.indexOf('.') > 0) {
 				// {"parent.child": sub_criteria}
 				var parent = c.split('.', 1)[0];
 				var child = c.substring(parent.length+1);
 				var sub_criteria = {};sub_criteria[child] = criteria[c];
-				return self.run(x[parent], sub_criteria);
+				return self.run(x[parent], sub_criteria, field+'.'+parent);
 			} else if(typeof(criteria[c]) != 'object') {
 				// {a:10}
 				return x[c] == criteria[c];
 			}
 			// {a:{$gt:10}}
-			return self.run(x, criteria[c], c);
+			return self.run(x[c], criteria[c], field+'.'+c);
 		});
 	}
 	// Comparison
-	cr_gt(x,c,f:string):bool {return x[f] > c;}
-	cr_gte(x,c,f:string):bool {return x[f] >= c;}
-	cr_lt(x,c,f:string):bool {return x[f] < c;}
-	cr_lte(x,c,f:string):bool {return x[f] <= c;}
-	cr_in(x,a:Array,f:string):bool {return a.indexOf(x[f]) >= 0;}
-	cr_nin(x,a:Array,f:string):bool {return a.indexOf(x[f]) == -1;}
+	cr_gt(x,c):bool {return x > c;}
+	cr_gte(x,c):bool {return x >= c;}
+	cr_lt(x,c):bool {return x < c;}
+	cr_lte(x,c):bool {return x <= c;}
+	cr_in(x,a:Array):bool {return a.indexOf(x) >= 0;}
+	cr_nin(x,a:Array):bool {return a.indexOf(x) == -1;}
 	
 	// Logical
 	cr_and(x,a:Array):bool {return a.every(this.cr_run_array(x)); }
@@ -124,10 +142,10 @@ export class QuerySelector {
 	cr_nor(x,a:Array):bool {return !a.some(this.cr_run_array(x)); }
 	
 	// Element
-	cr_exists(x,c,f:string):bool {return c ^ (x[f] === undefined);}
+	cr_exists(x,c):bool {return c ^ (x === undefined);}
 	
 	// Evaluation
-	cr_where(x,c,f:string):bool {
+	cr_where(x,c):bool {
 		switch(typeof(c)) {
 		case 'function':
 			return c.call(x);
@@ -140,12 +158,24 @@ export class QuerySelector {
 	}
 	
 	// Array
-	cr_all(x,a:Array,f:string):bool {var xf = x[f];return a.every(function(e){return xf.indexOf(e) >= 0;}); }
-	cr_elemMatch(x,c,f:string):bool {
-		var self:QuerySelector = this;
-		return x[f].some(function(element, index, array) {return self.cr_run(element, c)});
+	cr_every(cr): (x,c,f:string)=>string {
+		return function(x,c,f:string) {
+console.log("cr_every:",x,c,f);
+			if(x[f] instanceof Array) {
+				return x[f].some(function(e,i,a){
+console.log("e:",a,i,f, cr(a,c,i));
+					return cr(a,c,i);});
+			} else {
+				return cr(x,c,f);
+			}
+		};
 	}
-	cr_size(x,c,f:string):bool {return x[f].length == c; }
+	cr_all(x,a:Array):bool {return a.every(function(e){return x.indexOf(e) >= 0;}); }
+	cr_elemMatch(x,c):bool {
+		var self:QuerySelector = this;
+		return x.some(function(element, index, array) {return self.cr_run(element, c)});
+	}
+	cr_size(x,c):bool {return x.length == c; }
 	
 	// Virtual
 	cr_run(x,c):bool {return this.run(x, c);}
@@ -196,6 +226,36 @@ export class UpdateOperator {
 	cr_set(x,c,f:string) {x[f] = c;}
 	cr_unset(x,c,f:string) {delete x[f];}
 }
+
+// http://docs.mongodb.org/manual/reference/operator/projection/
+export class ProjectionOperator {
+	projection_operators = {};
+	constructor() {
+		this.projection_operators = {
+			// Fields
+			'$': this.cr_first,
+			'$elemMatch': this.cr_elemMatch,
+			'$slice': this.cr_slice,
+		};
+	}
+	run(x, criteria, updater?) {
+		var self = this;
+		return Object.keys(criteria).forEach(function(c, i, keys) {
+			if(self.projection_operators[c]) {
+				// {field: {$gt: threshold}
+				updater = self.projection_operators[c];
+				return self.run(x, criteria[c], updater);
+			}
+			// {$updater:{a:10}}
+			return updater.call(self, x, criteria[c], c);
+		});
+	}
+	// Fields
+	cr_first(x,c,f:string) {x[f] += c;}
+	cr_elemMatch(x,c,f:string) {x[c] = x[f]; delete x[f];}
+	cr_slice(x,c,f:string) {x[f] = c;}
+}
+
 
 // http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
 export class MongoDbCollection {

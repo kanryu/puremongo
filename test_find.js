@@ -121,6 +121,7 @@ describe('collection', function () {
               // Fetch the document
               collection.find({a:{$gt:15}}).toArray(function(err, results) {
                 assert.equal(null, err);
+                assert.equal(1, results.length);
                 assert.equal(20, results[0].a);
                 assert.equal('world_safe2', results[0].hello);
                 db.close();
@@ -341,7 +342,7 @@ describe('collection', function () {
           });
         });
 
-        /// find docs when Array contains [A,B,C]
+        /// find docs when $elemMatch of Array
         it('find docs when $elemMatch of Array', function () {
           var db = new Db('test', new Server('locahost', 27017));
           db.open(function(err, db) {
@@ -415,6 +416,65 @@ describe('collection', function () {
             });
           });
         });
+
+//        /// find docs.a.$ when A
+//        // http://docs.mongodb.org/manual/reference/operator/projection/positional/
+//        it('find docs.aa.$ when A', function () {
+//          var db = new Db('test', new Server('locahost', 27017));
+//          db.open(function(err, db) {
+//            // Fetch a collection to insert document into
+//            var collection = db.collection("find_collection_safe4");
+//            // Insert a single document
+//            collection.insert([
+//              { "_id" : 1, "semester" : 1, "grades" : [ 70, 87, 90 ] },
+//              { "_id" : 2, "semester" : 1, "grades" : [ 90, 88, 92 ] },
+//              { "_id" : 3, "semester" : 1, "grades" : [ 85, 100, 90 ] },
+//              { "_id" : 4, "semester" : 2, "grades" : [ 79, 85, 80 ] },
+//              { "_id" : 5, "semester" : 2, "grades" : [ 88, 88, 92 ] },
+//              { "_id" : 6, "semester" : 2, "grades" : [ 95, 90, 96 ] },
+//            ], {w:1}, function(err, result) {
+//              assert.equal(null, err);
+//
+//              // Fetch the document
+////              collection.find({semester:1, grades:{$gte:85}},{ "grades.$": 1 }).toArray(function(err, results) {
+//              collection.find({semester:1, grades:{$gte:85}}).toArray(function(err, results) {
+//                assert.equal(null, err);
+//                assert.equal(3, results.length);
+//                assert.equal(87, results[0].grades);
+//                db.close();
+//              })
+//            });
+//          });
+//        });
+//
+//        /// find docs.a.$ when A
+//        // http://docs.mongodb.org/manual/reference/operator/projection/positional/
+//        it('find docs.bb.$ when A', function () {
+//          var db = new Db('test', new Server('locahost', 27017));
+//          db.open(function(err, db) {
+//            // Fetch a collection to insert document into
+//            var collection = db.collection("find_collection_safe4");
+//            // Insert a single document
+//            collection.insert([
+//              { "_id" : 7, semester: 3, "grades" : [ { grade: 80, mean: 25, std: 8 },
+//                                                     { grade: 85, mean: 50, std: 5 },
+//                                                     { grade: 90, mean: 65, std: 3 } ] },
+//              { "_id" : 8, semester: 3, "grades" : [ { grade: 92, mean: 68, std: 8 },
+//                                                     { grade: 78, mean: 90, std: 5 },
+//                                                     { grade: 88, mean: 85, std: 3 } ] },
+//            ], {w:1}, function(err, result) {
+//              assert.equal(null, err);
+//
+//              // Fetch the document
+//              collection.find({ "grades.mean": { $gt: 70 } },{ "grades.$": 1 }).toArray(function(err, results) {
+//                assert.equal(null, err);
+//                assert.equal(1, results.length);
+//                assert.equal(87, results[0].grades);
+//                db.close();
+//              })
+//            });
+//          });
+//        });
 
         /// find operators check for not implemented options
         it('find operators check for not implemented options', function () {
